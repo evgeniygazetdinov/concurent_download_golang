@@ -4,10 +4,10 @@ services:
   api_go_calc:
     container_name: calc
     restart: always
-    image: api_go_calc_image
+    image: concur_download
     build: .
     ports:
       - "8080:8080"
     volumes:
-      - ./:/api_calc_go
+      - ./:/concur_download
 
