@@ -7,36 +7,32 @@ import (
 	"os"
 	"github.com/gorilla/handlers"
 	"github.com/gorilla/mux"
+	"os/exec"
+	server "lib"
 )
 
-const one_predicate = "a"
-const two_predicate = "b"
 
-
-// func DownloadFile() error {
-
-// 	// Get the data
-// 	ytdl := youtube_dl.YoutubeDl{}
-// 	ytdl.Path = "$GOPATH/src/app/srts" // for example
-// 	err := ytdl.DownloadVideo(noeTdQaBYCk)
-// 	if err != nil {
-// 		log.Printf("%v", err)
-// 	}
-// }
-
-func mul(w http.ResponseWriter, r *http.Request) {
-	fileUrl := "https://golangcode.com/logo.svg"
-
-	fmt.Println("Download 7 : " + fileUrl)
-	for i := 1; i < 2; i++{
-		fmt.Println("Downloaded %d:i ", i)
-        // go DownloadFile()
+func exec_command(url string, nums chan string,w http.ResponseWriter, r *http.Request){
+	out, err := exec.Command("bash", "-c", fmt.Sprintf("youtube-dl %s", url)).Output()
+	if err != nil {
+        panic(url)
     }
+	nums <-string(out);
+}
+
+func uploader(w http.ResponseWriter, r *http.Request) {
+	var url = "https://www.youtube.com/watch?v=yWUznMPTZWM";
+	my_channel := make(chan string) 
+    go exec_command(url, my_channel, w, r);
+	server.SUCCESS_HANDLER(<-my_channel, w, r);
+	close(my_channel)
+
 }
 
 func main() {
 	router := mux.NewRouter().StrictSlash(true)
-	router.HandleFunc("/null/", mul)
+	router.HandleFunc("/null/", uploader);
+
 	loggedRouter := handlers.LoggingHandler(os.Stdout, router)
 	log.Println("listening on 8080")
 	http.ListenAndServe(":8080", loggedRouter)
