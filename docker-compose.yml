@@ -1,8 +1,8 @@
 version: "3.7"
 
 services:
-  api_go_calc:
-    container_name: calc
+  concur_download:
+    container_name: concur_download
     restart: always
     image: concur_download
     build: .

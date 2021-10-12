@@ -8,42 +8,31 @@ import (
 	"github.com/gorilla/handlers"
 	"github.com/gorilla/mux"
 	"os/exec"
-	"bytes"
 	server "lib"
 )
 
-func exec_command(args string, w http.ResponseWriter, r *http.Request) {
-	cmd := exec.Command("date")
-	var outb, errb bytes.Buffer
-	cmd.Stdout = &outb
-	fmt.Println("out")
-	cmd.Stderr = &errb
-	fmt.Println("err")
-	err := cmd.Run()
-	fmt.Println("run")
-	if err != nil {
-		log.Fatal(err)
-	}
-	fmt.Println("call handler")
-	server.SUCCESS_HANDLER(fmt.Sprint("1"), w, r )
-	fmt.Println("after handler")
 
+func exec_command(url string, nums chan string,w http.ResponseWriter, r *http.Request){
+	out, err := exec.Command("bash", "-c", fmt.Sprintf("youtube-dl %s", url)).Output()
+	if err != nil {
+        panic(url)
+    }
+	nums <-string(out);
 }
 
 func uploader(w http.ResponseWriter, r *http.Request) {
-	var fileUrl = "myfile";
-	fmt.Println("Download 7 : " + fileUrl)
-		
-	log.Println("before for")
-	for i := 1; i < 2; i++{
-		fmt.Println("Downloaded %d:i ", i)
-        go exec_command(fileUrl, w, r);
-    }
+	var url = "https://www.youtube.com/watch?v=yWUznMPTZWM";
+	my_channel := make(chan string) 
+    go exec_command(url, my_channel, w, r);
+	server.SUCCESS_HANDLER(<-my_channel, w, r);
+	close(my_channel)
+
 }
 
 func main() {
 	router := mux.NewRouter().StrictSlash(true)
-	router.HandleFunc("/null/", uploader)
+	router.HandleFunc("/null/", uploader);
+
 	loggedRouter := handlers.LoggingHandler(os.Stdout, router)
 	log.Println("listening on 8080")
 	http.ListenAndServe(":8080", loggedRouter)
