@@ -23,9 +23,8 @@ func exec_command(url string, nums chan string,w http.ResponseWriter, r *http.Re
 func uploader(w http.ResponseWriter, r *http.Request) {
 	var url = fmt.Sprintf("https://www.youtube.com/watch?v=%s",server.GET_URL_FOR_DOWNLOAD(w, r))
 	my_channel := make(chan string) 
-    go exec_command(url, my_channel, w, r);
+    	go exec_command(url, my_channel, w, r);
 	server.SUCCESS_HANDLER(<-my_channel, w, r);
-	
 	close(my_channel)
 
 }
