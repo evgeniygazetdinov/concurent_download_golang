@@ -22,7 +22,7 @@ func exec_command(url string, nums chan string,w http.ResponseWriter, r *http.Re
 
 func uploader(w http.ResponseWriter, r *http.Request) {
 	var url = "https://www.youtube.com/watch?v=yWUznMPTZWM";
-	my_channel := make(chan string) 
+	my_channel := make(chan string, 2) 
     go exec_command(url, my_channel, w, r);
 	server.SUCCESS_HANDLER(<-my_channel, w, r);
 	close(my_channel)
