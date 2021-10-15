@@ -2,9 +2,9 @@ package lib
 import (
 	"encoding/json"
 	"net/http"
-	"strconv"
-	"fmt"
 )
+
+const URL_PLACE = "url"
 
 func SUCCESS_HANDLER(result string, w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
@@ -22,13 +22,7 @@ func get_url_string_from_uri(variable_name string, w http.ResponseWriter, r *htt
 	return variable
 }
 
-func get_url_for_download(url_string string, w http.ResponseWriter, r *http.Request) string {
-	raw_url := get_url_string_from_uri(url_string, w, r)
-	url_link, err := strconv.Atoi(raw_url)
-	if err != nil {
-
-		fmt.Println((err))
-	}
-	return url_link
+func GET_URL_FOR_DOWNLOAD(w http.ResponseWriter, r *http.Request) string {
+	return (get_url_string_from_uri(URL_PLACE, w, r))[0]
 }
 
