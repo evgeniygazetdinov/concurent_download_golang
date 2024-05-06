@@ -1,40 +1,186 @@
 package main
 
 import (
+	"database/sql"
+	"encoding/json"
+	"fmt"
 	"log"
 	"net/http"
-	"fmt"
-	"os"
-	"github.com/gorilla/handlers"
+	"strconv"
+
+	_ "github.com/go-sql-driver/mysql"
 	"github.com/gorilla/mux"
-	"os/exec"
-	server "lib"
 )
 
+const (
+	dbDriver = "mysql"
+	dbUser   = "root"
+	dbPass   = "1234"
+	dbName   = "gocrud_app"
+)
 
-func exec_command(url string, nums chan string,w http.ResponseWriter, r *http.Request){
-	out, err := exec.Command("bash", "-c", fmt.Sprintf("youtube-dl %s", url)).Output()
-	if err != nil {
-        panic(url)
-    }
-	nums <-string(out);
+type User struct {
+	ID    int
+	Name  string
+	Email string
 }
 
-func uploader(w http.ResponseWriter, r *http.Request) {
-	var url = fmt.Sprintf("https://www.youtube.com/watch?v=%s",server.GET_URL_FOR_DOWNLOAD(w, r))
-	my_channel := make(chan string) 
-    	go exec_command(url, my_channel, w, r);
-	server.SUCCESS_HANDLER(<-my_channel, w, r);
-	close(my_channel)
+func CreateUser(db *sql.DB, name, email string) error {
+	query := "INSERT INTO users (name, email) VALUES (?, ?)"
+	_, err := db.Exec(query, name, email)
+	if err != nil {
+		return err
+	}
+	return nil
+}
 
+func createUserHandler(w http.ResponseWriter, r *http.Request) {
+	db, err := sql.Open(dbDriver, dbUser+":"+dbPass+"@/"+dbName)
+	if err != nil {
+		panic(err.Error())
+	}
+	defer db.Close()
+
+	// Parse JSON data from the request body
+	var user User
+	json.NewDecoder(r.Body).Decode(&user)
+
+	CreateUser(db, user.Name, user.Email)
+	if err != nil {
+		http.Error(w, "Failed to create user", http.StatusInternalServerError)
+		return
+	}
+
+	w.WriteHeader(http.StatusCreated)
+	fmt.Fprintln(w, "User created successfully")
+}
+
+func getUserHandler(w http.ResponseWriter, r *http.Request) {
+	db, err := sql.Open(dbDriver, dbUser+":"+dbPass+"@/"+dbName)
+	if err != nil {
+		panic(err.Error())
+	}
+	defer db.Close()
+
+	// Get the 'id' parameter from the URL
+	vars := mux.Vars(r)
+	idStr := vars["id"]
+
+	// Convert 'id' to an integer
+	userID, err := strconv.Atoi(idStr)
+
+	// Call the GetUser function to fetch the user data from the database
+	user, err := GetUser(db, userID)
+	if err != nil {
+		http.Error(w, "User not found", http.StatusNotFound)
+		return
+	}
+
+	// Convert the user object to JSON and send it in the response
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(user)
+}
+
+func GetUser(db *sql.DB, id int) (*User, error) {
+	query := "SELECT * FROM users WHERE id = ?"
+	row := db.QueryRow(query, id)
+
+	user := &User{}
+	err := row.Scan(&user.ID, &user.Name, &user.Email)
+	if err != nil {
+		return nil, err
+	}
+	return user, nil
+}
+
+func UpdateUser(db *sql.DB, id int, name, email string) error {
+	query := "UPDATE users SET name = ?, email = ? WHERE id = ?"
+	_, err := db.Exec(query, name, email, id)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func updateUserHandler(w http.ResponseWriter, r *http.Request) {
+	db, err := sql.Open(dbDriver, dbUser+":"+dbPass+"@/"+dbName)
+	if err != nil {
+		panic(err.Error())
+	}
+	defer db.Close()
+
+	// Get the 'id' parameter from the URL
+	vars := mux.Vars(r)
+	idStr := vars["id"]
+
+	// Convert 'id' to an integer
+	userID, err := strconv.Atoi(idStr)
+
+	var user User
+	err = json.NewDecoder(r.Body).Decode(&user)
+
+	// Call the GetUser function to fetch the user data from the database
+	UpdateUser(db, userID, user.Name, user.Email)
+	if err != nil {
+		http.Error(w, "User not found", http.StatusNotFound)
+		return
+	}
+
+	fmt.Fprintln(w, "User updated successfully")
+}
+
+func DeleteUser(db *sql.DB, id int) error {
+	query := "DELETE FROM users WHERE id = ?"
+	_, err := db.Exec(query, id)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func deleteUserHandler(w http.ResponseWriter, r *http.Request) {
+	db, err := sql.Open(dbDriver, dbUser+":"+dbPass+"@/"+dbName)
+	if err != nil {
+		panic(err.Error())
+	}
+
+	defer db.Close()
+
+	// Get the 'id' parameter from the URL
+	vars := mux.Vars(r)
+	idStr := vars["id"]
+
+	// Convert 'id' to an integer
+	userID, err := strconv.Atoi(idStr)
+	if err != nil {
+		http.Error(w, "Invalid 'id' parameter", http.StatusBadRequest)
+		return
+	}
+
+	user := DeleteUser(db, userID)
+	if err != nil {
+		http.Error(w, "User not found", http.StatusNotFound)
+		return
+	}
+
+	fmt.Fprintln(w, "User deleted successfully")
+
+	// Convert the user object to JSON and send it in the response
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(user)
 }
 
 func main() {
-	router := mux.NewRouter().StrictSlash(true)
-	router.HandleFunc("/downloader/", uploader);
+	// Create a new router
+	r := mux.NewRouter()
 
-	loggedRouter := handlers.LoggingHandler(os.Stdout, router)
-	log.Println("listening on 8080")
-	http.ListenAndServe(":8081", loggedRouter)
+	// Define your HTTP routes using the router
+	r.HandleFunc("/user", createUserHandler).Methods("POST")
+	r.HandleFunc("/user/{id}", getUserHandler).Methods("GET")
+	r.HandleFunc("/user/{id}", updateUserHandler).Methods("PUT")
+	r.HandleFunc("/user/{id}", deleteUserHandler).Methods("DELETE")
 
+	// Start the HTTP server on port 8090
+	log.Println("Server listening on :8080")
+	log.Fatal(http.ListenAndServe(":8080", r))
 }
