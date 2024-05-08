@@ -10,6 +10,7 @@ import (
 
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/gorilla/mux"
+	swaggerFiles "github.com/swaggo/files"
 )
 
 const (
@@ -179,6 +180,8 @@ func main() {
 	r.HandleFunc("/user/{id}", getUserHandler).Methods("GET")
 	r.HandleFunc("/user/{id}", updateUserHandler).Methods("PUT")
 	r.HandleFunc("/user/{id}", deleteUserHandler).Methods("DELETE")
+	router := mux.NewRouter()
+	router.GET("/docs/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
 
 	// Start the HTTP server on port 8090
 	log.Println("Server listening on :8080")
