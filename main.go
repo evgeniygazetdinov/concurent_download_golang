@@ -10,14 +10,14 @@ import (
 
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/gorilla/mux"
-	swaggerFiles "github.com/swaggo/files"
+	httpSwagger "github.com/swaggo/http-swagger"
 )
 
 const (
 	dbDriver = "mysql"
 	dbUser   = "root"
 	dbPass   = "1234"
-	dbName   = "gocrud_app"
+	dbName   = "gocrud"
 )
 
 type User struct {
@@ -26,17 +26,31 @@ type User struct {
 	Email string
 }
 
+// CreateOrder godoc
+// @Summary Create a new order
+// @Description Create a new order with the input paylod
+// @Tags orders
+// @Accept  json
+// @Produce  json
+// @Param order body Order true "Create order"
+// @Success 200 {object} Order
+// @Router /orders [post]
+
 func CreateUser(db *sql.DB, name, email string) error {
 	query := "INSERT INTO users (name, email) VALUES (?, ?)"
 	_, err := db.Exec(query, name, email)
+	fmt.Println(name, email)
 	if err != nil {
 		return err
 	}
+	fmt.Println("here")
 	return nil
+
 }
 
 func createUserHandler(w http.ResponseWriter, r *http.Request) {
 	db, err := sql.Open(dbDriver, dbUser+":"+dbPass+"@/"+dbName)
+	fmt.Println(dbName)
 	if err != nil {
 		panic(err.Error())
 	}
@@ -46,12 +60,12 @@ func createUserHandler(w http.ResponseWriter, r *http.Request) {
 	var user User
 	json.NewDecoder(r.Body).Decode(&user)
 
-	CreateUser(db, user.Name, user.Email)
+	err = CreateUser(db, user.Name, user.Email)
+	fmt.Println(err)
 	if err != nil {
 		http.Error(w, "Failed to create user", http.StatusInternalServerError)
 		return
 	}
-
 	w.WriteHeader(http.StatusCreated)
 	fmt.Fprintln(w, "User created successfully")
 }
@@ -180,10 +194,9 @@ func main() {
 	r.HandleFunc("/user/{id}", getUserHandler).Methods("GET")
 	r.HandleFunc("/user/{id}", updateUserHandler).Methods("PUT")
 	r.HandleFunc("/user/{id}", deleteUserHandler).Methods("DELETE")
-	router := mux.NewRouter()
-	router.GET("/docs/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
+	r.PathPrefix("/swagger/").Handler(httpSwagger.WrapHandler)
 
 	// Start the HTTP server on port 8090
-	log.Println("Server listening on :8080")
-	log.Fatal(http.ListenAndServe(":8080", r))
+	log.Println("Server listening on :8082")
+	log.Fatal(http.ListenAndServe(":8082", r))
 }
