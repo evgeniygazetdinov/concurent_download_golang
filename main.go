@@ -26,6 +26,16 @@ type User struct {
 	Email string
 }
 
+// CreateOrder godoc
+// @Summary Create a new order
+// @Description Create a new order with the input paylod
+// @Tags orders
+// @Accept  json
+// @Produce  json
+// @Param order body Order true "Create order"
+// @Success 200 {object} Order
+// @Router /orders [post]
+
 func CreateUser(db *sql.DB, name, email string) error {
 	query := "INSERT INTO users (name, email) VALUES (?, ?)"
 	_, err := db.Exec(query, name, email)
@@ -184,7 +194,7 @@ func main() {
 	r.HandleFunc("/user/{id}", getUserHandler).Methods("GET")
 	r.HandleFunc("/user/{id}", updateUserHandler).Methods("PUT")
 	r.HandleFunc("/user/{id}", deleteUserHandler).Methods("DELETE")
-	r.PathPrefix("/swagger").Handler(httpSwagger.WrapHandler)
+	r.PathPrefix("/swagger/").Handler(httpSwagger.WrapHandler)
 
 	// Start the HTTP server on port 8090
 	log.Println("Server listening on :8082")
