@@ -26,16 +26,6 @@ type User struct {
 	Email string
 }
 
-// CreateOrder godoc
-// @Summary Create a new order
-// @Description Create a new order with the input paylod
-// @Tags orders
-// @Accept  json
-// @Produce  json
-// @Param order body Order true "Create order"
-// @Success 200 {object} Order
-// @Router /orders [post]
-
 func CreateUser(db *sql.DB, name, email string) error {
 	query := "INSERT INTO users (name, email) VALUES (?, ?)"
 	_, err := db.Exec(query, name, email)
@@ -56,7 +46,6 @@ func createUserHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	defer db.Close()
 
-	// Parse JSON data from the request body
 	var user User
 	json.NewDecoder(r.Body).Decode(&user)
 
@@ -185,15 +174,34 @@ func deleteUserHandler(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(user)
 }
 
+// @title           Swagger Example API
+// @version         1.0
+// @description     This is a sample server celler server.
+// @termsOfService  http://swagger.io/terms/
+
+// @contact.name   API Support
+// @contact.url    http://www.swagger.io/support
+// @contact.email  support@swagger.io
+
+// @license.name  Apache 2.0
+// @license.url   http://www.apache.org/licenses/LICENSE-2.0.html
+
+// @host      localhost:8080
+// @BasePath  /api/v1
+
+// @securityDefinitions.basic  BasicAuth
+
+// @externalDocs.description  OpenAPI
+// @externalDocs.url          https://swagger.io/resources/open-api/
 func main() {
 	// Create a new router
 	r := mux.NewRouter()
 
 	// Define your HTTP routes using the router
-	r.HandleFunc("/user", createUserHandler).Methods("POST")
-	r.HandleFunc("/user/{id}", getUserHandler).Methods("GET")
-	r.HandleFunc("/user/{id}", updateUserHandler).Methods("PUT")
-	r.HandleFunc("/user/{id}", deleteUserHandler).Methods("DELETE")
+	r.HandleFunc("/api/user", createUserHandler).Methods("POST")
+	r.HandleFunc("/api/user/{id}", getUserHandler).Methods("GET")
+	r.HandleFunc("/api/user/{id}", updateUserHandler).Methods("PUT")
+	r.HandleFunc("/api/user/{id}", deleteUserHandler).Methods("DELETE")
 	r.PathPrefix("/swagger/").Handler(httpSwagger.WrapHandler)
 
 	// Start the HTTP server on port 8090
