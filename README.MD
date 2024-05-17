@@ -3,7 +3,9 @@
 <br>steps:<br>
 
 
-<br>-[] make query into mysql <br>
+<br>-[v] make query into mysql <br>
+<br>-[] implement migrations <br>
+
 
 
 <br>-[] implement validators<br>

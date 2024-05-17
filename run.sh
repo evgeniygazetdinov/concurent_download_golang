@@ -1,1 +1,1 @@
-docker compose -f docker-compose.yml up -d mysql && go run main.go
+docker compose -f docker-compose.yml up -d mysql && go run *.go
