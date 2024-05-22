@@ -1,13 +1,13 @@
--- gocrud.chats definition
-
-CREATE TABLE gocrud.chats (
-	id BIGINT auto_increment NULL,
-	users_id json NOT NULL,
-	CONSTRAINT chats_unique UNIQUE KEY (users_id)
+CREATE TABLE gocrud.chat (
+	id BIGINT auto_increment NOT NULL,
+	users_ids varchar(100) NOT NULL,
+	CONSTRAINT chat_pk PRIMARY KEY (id),
+	CONSTRAINT chat_unique UNIQUE KEY (users_ids)
 )
 ENGINE=InnoDB
 DEFAULT CHARSET=utf8mb4
 COLLATE=utf8mb4_0900_ai_ci;
+
 
 
 -- gocrud.users definition
