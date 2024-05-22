@@ -27,14 +27,44 @@ type User struct {
 }
 
 type Chat struct {
-	ID        int
-	users_ids string
+	ID       int
+	UsersIds string
 }
 
 type Message struct {
-	ID      int
-	text    string
-	chat_id int
+	ID     int
+	Text   string
+	ChatId int
+}
+
+func CreateChat(db *sql.DB, usersId string) error {
+	query := "INSERT INTO chat (users_ids) VALUES (?)"
+	_, err := db.Exec(query, usersId)
+	if err != nil {
+		return err
+	}
+	fmt.Println("here")
+	return nil
+}
+
+func createChatHandler(w http.ResponseWriter, r *http.Request) {
+	db, err := sql.Open(dbDriver, dbUser+":"+dbPass+"@/"+dbName)
+	if err != nil {
+		panic(err.Error())
+	}
+	defer db.Close()
+
+	var chat Chat
+	json.NewDecoder(r.Body).Decode(&chat)
+
+	err = CreateChat(db, chat.UsersIds)
+	fmt.Println(err)
+	if err != nil {
+		http.Error(w, "Failed to create сhat", http.StatusInternalServerError)
+		return
+	}
+	w.WriteHeader(http.StatusCreated)
+	fmt.Fprintln(w, "сhat created successfully")
 }
 
 func CreateUser(db *sql.DB, name, email string) error {
@@ -211,6 +241,9 @@ func main() {
 	r.HandleFunc("/api/user/{id}", getUserHandler).Methods("GET")
 	r.HandleFunc("/api/user/{id}", updateUserHandler).Methods("PUT")
 	r.HandleFunc("/api/user/{id}", deleteUserHandler).Methods("DELETE")
+
+	r.HandleFunc("/api/chat", createChatHandler).Methods("POST")
+
 	r.PathPrefix("/swagger/").Handler(httpSwagger.WrapHandler)
 
 	// Start the HTTP server on port 8090
