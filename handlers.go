@@ -20,6 +20,19 @@ func CreateChat(db *sql.DB, usersId string) error {
 	return nil
 }
 
+func chatValidator(db *sql.DB, chatIds string) string {
+	query := "SELECT * FROM users WHERE id = ?"
+	row := db.QueryRow(query, chatIds)
+
+	user := &User{}
+	err := row.Scan(&user.ID, &user.Name, &user.Email)
+	if err != nil {
+		return ""
+	}
+	return chatIds
+
+}
+
 func createChatHandler(w http.ResponseWriter, r *http.Request) {
 	db, err := sql.Open(dbDriver, dbUser+":"+dbPass+"@/"+dbName)
 	if err != nil {
@@ -29,7 +42,7 @@ func createChatHandler(w http.ResponseWriter, r *http.Request) {
 
 	var chat Chat
 	json.NewDecoder(r.Body).Decode(&chat)
-
+	validChatIds := chatValidator(db, chat.UsersIds)
 	err = CreateChat(db, chat.UsersIds)
 	fmt.Println(err)
 	if err != nil {

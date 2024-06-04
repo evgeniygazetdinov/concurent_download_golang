@@ -60,21 +60,16 @@ type Like struct {
 // @externalDocs.description  OpenAPI
 // @externalDocs.url          https://swagger.io/resources/open-api/
 func main() {
-	// Create a new router
 	r := mux.NewRouter()
-
-	// Define your HTTP routes using the router
 	r.HandleFunc("/api/user", createUserHandler).Methods("POST")
 	r.HandleFunc("/api/user/{id}", getUserHandler).Methods("GET")
 	r.HandleFunc("/api/user/{id}", updateUserHandler).Methods("PUT")
 	r.HandleFunc("/api/user/{id}", deleteUserHandler).Methods("DELETE")
-	r.HandleFunc("/api/user/setLike/{id}/{id}", deleteUserHandler).Methods("DELETE")
+	r.HandleFunc("/api/user/setLike/{id}/{id}", deleteUserHandler).Methods("POST")
 
 	r.HandleFunc("/api/chat", createChatHandler).Methods("POST")
 
 	r.PathPrefix("/swagger/").Handler(httpSwagger.WrapHandler)
-
-	// Start the HTTP server on port 8090
 	log.Println("Server listening on http://0.0.0.0:8082")
 	log.Fatal(http.ListenAndServe(":8082", r))
 }
